@@ -48,10 +48,12 @@ class Layouts:
         self.plane_check.grid(row=0, column=2, **self.padWE)
 
     def create_layout_auto(self):
-        self.auto_button.grid(rowspan=2, row=0, column=0, **self.padWE)
+        self.auto_button.grid(rowspan=3, row=0, column=0, **self.padWE)
         self.auto_range_text.grid(row=0, column=1, **self.padWE)
         self.auto_range.grid(row=0, column=2, **self.padWE)
-        self.auto_check.grid(row=1, column=1, **self.padWE)
+        self.auto_thresh_text.grid(row=1, column=1, **self.padWE)
+        self.auto_thresh.grid(row=1, column=2, **self.padWE)
+        self.auto_check.grid(row=2, column=1, **self.padWE)
 
     def create_layout_size(self):
         self.original_size_text.grid(row=0, column=0, **self.padWE)

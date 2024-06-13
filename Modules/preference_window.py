@@ -231,11 +231,15 @@ class Window(ttk.Frame):
             text="Auto detection",
             command=self.auto_detection,
             width=18,
-            height=2,
+            height=3,
         )
-        self.auto_range_text = ttk.Label(self.frame_auto, text="Range")
+        self.auto_range_text = ttk.Label(self.frame_auto, text="Range (nm)")
         self.auto_range = ttk.Entry(self.frame_auto, width=7)
-        self.auto_range.insert(tk.END, "10")
+        self.auto_range.insert(tk.END, "2")
+        #
+        self.auto_thresh_text = ttk.Label(self.frame_auto, text="Threshhold")
+        self.auto_thresh = ttk.Entry(self.frame_auto, width=7)
+        self.auto_thresh.insert(tk.END, "10")
         #
         self.auto_bool = tk.BooleanVar()
         self.auto_bool.set(False)
@@ -243,7 +247,6 @@ class Window(ttk.Frame):
             self.frame_auto,
             variable=self.auto_bool,
             text="Run when open",
-            command=self.auto_detection,
         )
 
     def create_frame_size(self):

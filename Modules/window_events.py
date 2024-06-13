@@ -146,7 +146,9 @@ class Events:
         self.myimage.show_image()
 
     def auto_detection(self):
-        pass
+        self.myimage.auto_range = float(self.auto_range.get())
+        self.myimage.auto_thresh = float(self.auto_thresh.get())
+        self.myimage.auto_detection()
 
     def original_size_changed(self, event):
         self.myimage.x_size_or = float(self.original_x.get())
@@ -165,6 +167,7 @@ class Events:
         self.name_change = True
 
     def record_function(self):
+        self.myimage.prepare_cut_image()
         self.rec_text()
         self.rec_image()
 

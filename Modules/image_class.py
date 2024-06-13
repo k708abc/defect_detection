@@ -78,12 +78,8 @@ class MyImage:
     min_contrast = 0
     color_num = 2
     image_name = "Target"
-    mouse_on = False
     mouse_x = 0
     mouse_y = 0
-    drag = False
-    drag_i = None
-    drag_j = None
     #
     smooth_val = 1
     median_val = 1
@@ -92,8 +88,9 @@ class MyImage:
     range_u = 100
     range_l = 0
     points = []
-    c_size = 10
-    auto_range = 10
+    c_size = 5
+    auto_range = 2
+    auto_thresh = 2
 
     @property
     def x_current(self):
@@ -113,7 +110,7 @@ class MyImage:
 
     @property
     def total_area(self):
-        return self.myimage.x_current * self.myimage.y_current
+        return self.x_current * self.y_current
 
     @property
     def defect_number(self):
@@ -174,8 +171,7 @@ class MyImage:
                 * sm4data_im.attrs["RHK_Ysize"]
                 * 1000000000,
                 1,
-            ),
-            sm4data_im.attrs["RHK_Bias"],
+            )
         ]
         return image_data, scan_params
 
@@ -184,7 +180,6 @@ class MyImage:
         scan_params = [
             30,
             round(30 / bmpdata_im.shape[1] * bmpdata_im.shape[0], 2),
-            0,
         ]
         return bmpdata_im, scan_params
 
@@ -192,7 +187,9 @@ class MyImage:
         with open(self.data_path) as f:
             lines = f.readlines()
             read_check = False
+            point_check = False
             text_data = []
+            self.points = []
             for line in lines:
                 values = line.split()
                 if "Peaks:" in values:
@@ -207,16 +204,20 @@ class MyImage:
 
                 if "Data:" in values:
                     read_check = True
-
+                    point_check = False
+                if point_check is True:
+                    if len(values) >= 2:
+                        self.points.append((int(values[0]), int(values[1])))
+                if "Defect_position:" in values:
+                    point_check = True
                 if "Current_size_X:" in values:
                     xsize = float(values[1])
                 if "Current_size_Y:" in values:
                     ysize = float(values[1])
-                if "STM_bias:" in values:
-                    bias = float(values[1]) / 1000
+
         data_np = np.array(text_data, dtype=np.float32)
         if read_check:
-            return data_np, [xsize, ysize, bias]
+            return data_np, [xsize, ysize]
         else:
             return False, False
 
@@ -371,7 +372,52 @@ class MyImage:
             self.image_cl[self.low_pix : height, 0:width] = l_image_show
 
     def prepare_cut_image(self):
-        self.cut_image = 
+        width = len(self.image_cad[1])
+        image_cl_gray = cv2.cvtColor(self.image_cad, cv2.COLOR_GRAY2BGR)
+        self.cut_image_gray = image_cl_gray[self.up_pix: self.low_pix -1, 0:width]
+        self.cut_image = self.image_cl[self.up_pix: self.low_pix -1, 0:width]
+        self.cut_points = []
+        for point in self.points:
+            x, y = point
+            y = y - self.up_pix
+            self.cut_points.append((x, y))
+        self.cut_image_p = np.copy(self.cut_image)
+        for point in self.cut_points:
+            if point[1] <= self.low_pix- self.up_pix and point[1] >= 0:
+                self.cut_image_p = cv2.circle(
+                    self.cut_image_p, point, self.c_size, (0, 0, 255), 1
+                )
+
+    def auto_detection(self):
+        pix_range = int(self.auto_range/self.x_current*self.x_current_pix/2)
+        height = len(self.image_mod)
+        width = len(self.image_mod[1])
+        x_list = np.arange(0, width, int(pix_range/2))
+        y_list = np.arange(0, height, int(pix_range/2))
+        points = []
+        for w in x_list:
+            for h in y_list:
+                x0 = max(w - pix_range, 0)
+                x1 = min(w + pix_range, width -1)
+                y0 = max(h - pix_range, 0)
+                y1 = min(h + pix_range, height -1)
+                vals = self.image_mod[y0:y1, x0:x1]
+                vw = len(vals[1])
+                vh = len(vals)
+                min_val = np.min(vals)
+                cand = np.where(vals = min_val)
+                for c in cand:
+                    if (c[0] in (0, vw -1)) or c[1] in (0, vh -1):
+                        pass
+                    else:
+                        points.append((c[0], c[1]))
+        #ここから
+
+
+
+
+
+
 
     def set_default(self):
         if self.open_bool:
