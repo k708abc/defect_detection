@@ -49,9 +49,13 @@ class Events:
         self.myimage.data_path = self.image_list.dir_name + "\\" + self.choice.get()
         self.myimage.channel_val = self.imtype_choice.current()
         self.myimage.channel_name = self.imtype_choice.get()
+        self.myimage.points = []
         self.myimage.read_image()
-        self.myimage.show_image()
+        if self.auto_bool.get() is False:
+            self.myimage.show_image()
         self.update_after_show()
+        if self.auto_bool.get():
+            self.auto_detection()
 
     def cb_color_selected(self, event):
         self.myimage.color_num = self.colormap_table.index(self.cb_color.get())
@@ -172,11 +176,21 @@ class Events:
         self.rec_image()
 
     def record_next_function(self):
+        self.myimage.prepare_cut_image()
         self.rec_text()
         self.rec_image()
+        num = self.image_list.images.index(self.choice.get()) + 1
+        if num >= len(self.image_list.images):
+            num = 0
+        self.choice.current(num)
+        self.image_open()
 
     def run_all_function(self):
-        pass
+        self.auto_bool.set(True)
+        for i in range(len(self.image_list.images)):
+            self.choice.current(i)
+            self.image_open()
+            self.record_function()
 
     def delete_function(self):
         self.myimage.points = []

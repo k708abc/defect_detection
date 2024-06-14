@@ -64,7 +64,11 @@ class Recording:
                 + "/nm2"
                 + "\n\n"
             )
+            f.write("Height_average" + "\t" + str(self.myimage.height_ave) + "\n")
+            f.write("Height_std" + "\t" + str(self.yimage.height_std) + "\n")
+            f.write("Normarized_std" + "\t" + str(self.myimage.norm_std) + "\n\n")
             f.write("Defect_position:" + "\n")
+
             for point in self.myimage.cut_points:
                 f.write(str(point[0]) + "\t" + str(point[1]) + "\n")
             f.write("\n")
@@ -74,7 +78,6 @@ class Recording:
                 for values in row:
                     f.write(str(values[0]) + "\t")
                 f.write("\n")
-
 
     def rec_image(self):
         if self.dirdiv_bool.get():
@@ -113,5 +116,3 @@ class Recording:
             )
         cv2.imwrite(img_name, self.myimage.image_show)
         cv2.imwrite(img_name_full, self.myimage.cut_image_p)
-
-

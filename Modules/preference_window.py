@@ -235,11 +235,11 @@ class Window(ttk.Frame):
         )
         self.auto_range_text = ttk.Label(self.frame_auto, text="Range (nm)")
         self.auto_range = ttk.Entry(self.frame_auto, width=7)
-        self.auto_range.insert(tk.END, "2")
+        self.auto_range.insert(tk.END, "3")
         #
         self.auto_thresh_text = ttk.Label(self.frame_auto, text="Threshhold")
         self.auto_thresh = ttk.Entry(self.frame_auto, width=7)
-        self.auto_thresh.insert(tk.END, "10")
+        self.auto_thresh.insert(tk.END, "2")
         #
         self.auto_bool = tk.BooleanVar()
         self.auto_bool.set(False)
