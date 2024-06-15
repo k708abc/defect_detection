@@ -12,7 +12,6 @@ class Window(ttk.Frame):
         self.create_frame_contrast()
         self.create_frame_cb()
         self.create_frame_process()
-        self.create_frame_rescale()
         self.create_frame_checks()
         self.create_frame_size()
         self.create_frame_auto()
@@ -179,29 +178,26 @@ class Window(ttk.Frame):
         self.lower_set_entry.bind("<Up>", self.lower_up)
         self.lower_set_entry.bind("<Down>", self.lower_down)
         #
-        self.smooth_entry = ttk.Entry(self.frame_process, width=5)
+        self.smooth_entry = ttk.Entry(self.frame_process, width=4)
         self.smooth_entry.insert(tk.END, "0")
         self.smooth_entry.bind("<Return>", self.smooth_change)
-        self.cb_smooth_text = ttk.Label(self.frame_process, text="Smoothing")
-        self.cb_smooth_unit = ttk.Label(self.frame_process, text="pixel")
+        self.cb_smooth_text = ttk.Label(self.frame_process, text="Smoothing (pix)")
         #
-        self.median_entry = ttk.Entry(self.frame_process, width=5)
+        self.median_entry = ttk.Entry(self.frame_process, width=4)
         self.median_entry.insert(tk.END, "1")
         self.median_entry.bind("<Return>", self.median_change)
-        self.cb_median_text = ttk.Label(self.frame_process, text="Median")
-        self.cb_median_unit = ttk.Label(self.frame_process, text="pixel")
-
-    def create_frame_rescale(self):
-        self.frame_rescale = ttk.Frame()
-        self.create_widgets_rescale()
-        self.create_layout_rescale()
-        self.frame_rescale.pack()
-
-    def create_widgets_rescale(self):
-        self.rescale_text = ttk.Label(self.frame_rescale, text="Rescale")
-        self.rescale_all = ttk.Entry(self.frame_rescale, width=7)
+        self.cb_median_text = ttk.Label(self.frame_process, text="Median (pix)")
+        #
+        self.analysis_range_text = ttk.Label(self.frame_process, text="Analysis radius (nm)")
+        self.analysis_range = ttk.Entry(self.frame_process, width=4)
+        self.analysis_range.bind("<Return>", self.analysis_range_change)
+        self.analysis_range.insert(tk.END, "1")
+        #
+        self.rescale_text = ttk.Label(self.frame_process, text="Rescale")
+        self.rescale_all = ttk.Entry(self.frame_process, width=7)
         self.rescale_all.insert(tk.END, "1")
         self.rescale_all.bind("<Return>", self.rescale)
+
 
     def create_frame_checks(self):
         self.frame_check = ttk.Frame()
@@ -219,6 +215,15 @@ class Window(ttk.Frame):
             command=self.plane_image,
         )
 
+        self.ave_bool = tk.BooleanVar()
+        self.ave_bool.set(False)
+        self.ave_check = tk.Checkbutton(
+            self.frame_check,
+            variable=self.ave_bool,
+            text="Average subtraction",
+            command=self.ave_image,
+        )
+
     def create_frame_auto(self):
         self.frame_auto = ttk.Frame()
         self.create_widgets_auto()
@@ -233,14 +238,16 @@ class Window(ttk.Frame):
             width=18,
             height=3,
         )
-        self.auto_range_text = ttk.Label(self.frame_auto, text="Range (nm)")
+        self.auto_range_text = ttk.Label(self.frame_auto, text="Detection Range (nm)")
         self.auto_range = ttk.Entry(self.frame_auto, width=7)
         self.auto_range.insert(tk.END, "3")
         #
-        self.auto_thresh_text = ttk.Label(self.frame_auto, text="Threshhold")
+        self.auto_thresh_text = ttk.Label(self.frame_auto, text="Threshhold (× std)")
         self.auto_thresh = ttk.Entry(self.frame_auto, width=7)
         self.auto_thresh.insert(tk.END, "2")
         #
+
+
         self.auto_bool = tk.BooleanVar()
         self.auto_bool.set(False)
         self.auto_check = tk.Checkbutton(

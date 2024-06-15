@@ -43,10 +43,13 @@ class Recording:
             f.write("Smoothing" + "\t" + str(self.myimage.smooth_val) + "\n")
             f.write("Median" + "\t" + str(self.myimage.median_val) + "\n")
             f.write("Rescale" + "\t" + str(self.myimage.mag) + "\n")
-            f.write("Subtraction" + "\t" + str(self.myimage.plane_bool) + "\n")
+            f.write("Plane_Subtraction" + "\t" + str(self.myimage.plane_bool) + "\n")
+            f.write("Average_Subtraction" + "\t" + str(self.myimage.ave_bool) + "\n")
             f.write("Range_upper" + "\t" + str(self.myimage.range_u) + "\n")
             f.write("Range_lower" + "\t" + str(self.myimage.range_l) + "\n")
-            f.write("Auto_range" + "\t" + str(self.myimage.auto_range) + "\n\n")
+            f.write("Auto_range" + "\t" + str(self.myimage.auto_range) + "\n")
+            f.write("Auto_thresh" + "\t" + str(self.myimage.auto_thresh) + "\n")
+            f.write("Analysis_range" + "\t" + str(self.myimage.analysis_range) + "\n\n")
             f.write(
                 "Total_area"
                 + "\t"
@@ -65,7 +68,7 @@ class Recording:
                 + "\n\n"
             )
             f.write("Height_average" + "\t" + str(self.myimage.height_ave) + "\n")
-            f.write("Height_std" + "\t" + str(self.yimage.height_std) + "\n")
+            f.write("Height_std" + "\t" + str(self.myimage.height_std) + "\n")
             f.write("Normarized_std" + "\t" + str(self.myimage.norm_std) + "\n\n")
             f.write("Defect_position:" + "\n")
 

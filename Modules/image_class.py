@@ -84,15 +84,16 @@ class MyImage:
     smooth_val = 1
     median_val = 1
     plane_bool = False
+    ave_bool = False
     mag = 1
     range_u = 100
     range_l = 0
     points = []
     cut_points = []
     rel_height = []
-    c_size = 5
     auto_range = 2
     auto_thresh = 2
+    analysis_range = 1
     #
     rel_height = []
     height_ave = None
@@ -114,6 +115,10 @@ class MyImage:
     @property
     def y_current_pix(self):
         return abs(self.range_u - self.range_l)
+    
+    @property
+    def analysis_range_pix(self):
+        return int(self.analysis_range / self.x_current * self.x_current_pix)
 
     @property
     def total_area(self):
@@ -147,13 +152,12 @@ class MyImage:
         self.open_bool = True
         self.image_pl = np.copy(self.image_or)
         self.image_mod = np.copy(self.image_or)
-        self.default_contrast()
         cv2.namedWindow(self.image_name)
         cv2.setMouseCallback(self.image_name, self.mouse_event_point)
 
     def default_contrast(self):
-        self.max_contrast = np.max(self.image_mod)
-        self.min_contrast = np.min(self.image_mod)
+        self.max_contrast = np.max(self.image_ave)
+        self.min_contrast = np.min(self.image_ave)
 
     def get_image_values(self):
         data_type = os.path.splitext(self.data_path)
@@ -237,6 +241,7 @@ class MyImage:
     ):
         if self.open_bool:
             self.plane()
+            self.ave_sub()
             self.smoothing()
             self.median()
             self.rescale()
@@ -248,12 +253,32 @@ class MyImage:
 
     def plane(self):
         if self.plane_bool is True:
-            self.image_pl = np.copy(self.image_or)
+            m1 = self.x_pix_or
+            m2 = self.y_pix_or
+            X1, X2 = np.mgrid[:m2, :m1]
+            image_sub = np.copy(self.image_or)
+            #Regression
+            X = np.hstack(   ( np.reshape(X1, (m1*m2, 1)) , np.reshape(X2, (m1*m2, 1)) ) )
+            X = np.hstack(   ( np.ones((m1*m2, 1)) , X ))
+            YY = np.reshape(image_sub, (m1*m2, 1))
+            theta = np.dot(np.dot( np.linalg.pinv(np.dot(X.transpose(), X)), X.transpose()), YY)
+            plane = np.reshape(np.dot(X, theta), (m2, m1))
+            #Subtraction
+            self.image_pl = image_sub - plane
         else:
             self.image_pl = np.copy(self.image_or)
 
+
+    def ave_sub(self):
+        self.image_ave = np.copy(self.image_pl)
+        if self.ave_bool:
+            for rows in range(len(self.image_pl)):
+                average = np.average(self.image_pl[rows])
+                self.image_ave[rows] = self.image_ave[rows] - average
+        self.default_contrast()
+
     def smoothing(self):
-        self.image_sm = ndimage.gaussian_filter(self.image_pl, float(self.smooth_val))
+        self.image_sm = ndimage.gaussian_filter(self.image_ave, float(self.smooth_val))
 
     def median(self):
         self.image_med = ndimage.gaussian_filter(self.image_sm, float(self.median_val))
@@ -268,7 +293,7 @@ class MyImage:
         for point in self.points:
             if point[1] <= self.low_pix and point[1] >= self.up_pix:
                 self.image_show = cv2.circle(
-                    self.image_show, point, self.c_size, (0, 0, 255), 1
+                    self.image_show, point, self.analysis_range_pix, (0, 0, 255), 1
                 )
 
     def add_point(self):
@@ -287,7 +312,7 @@ class MyImage:
             if dis < min_dis:
                 min_dis = dis
                 cand_num = i
-        if min_dis <= self.c_size**2:
+        if min_dis <= self.analysis_range_pix**2:
             self.points.pop(cand_num)
         self.draw_point()
 
@@ -397,7 +422,7 @@ class MyImage:
         for point in self.cut_points:
             if point[1] <= self.low_pix - self.up_pix and point[1] >= 0:
                 self.cut_image_p = cv2.circle(
-                    self.cut_image_p, point, self.c_size, (0, 0, 255), 1
+                    self.cut_image_p, point, self.analysis_range_pix, (0, 0, 255), 1
                 )
 
     def auto_detection(self):
@@ -427,7 +452,7 @@ class MyImage:
                         points.append((valx + x0, valy + y0))
         angles = np.linspace(0, 2 * np.pi, 30)
         circle_points = [
-            (int(self.pix_range * np.sin(t)), int(self.pix_range * np.cos(t)))
+            (int(self.analysis_range_pix * np.sin(t)), int(self.analysis_range_pix * np.cos(t)))
             for t in angles
         ]
         # self.points = points
@@ -455,7 +480,7 @@ class MyImage:
         width = len(self.image_mod[1])
         angles = np.linspace(0, 2 * np.pi, 30)
         circle_points = [
-            (int(self.pix_range * np.sin(t)), int(self.pix_range * np.cos(t)))
+            (int(self.analysis_range_pix * np.sin(t)), int(self.analysis_range_pix * np.cos(t)))
             for t in angles
         ]
         self.rel_height = []

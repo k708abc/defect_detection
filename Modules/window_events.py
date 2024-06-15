@@ -75,8 +75,6 @@ class Events:
         self.myimage.back_default()
         self.myimage.show_image()
 
-    def auto_set_function(self):
-        pass
 
     def set_default_function(self):
         self.myimage.set_default()
@@ -95,11 +93,22 @@ class Events:
         self.myimage.median_val = float(self.median_entry.get())
         self.myimage.show_image()
 
+    def analysis_range_change(self, event):
+        if self.analysis_range.get() == "":
+            self.analysis_range.insert(tk.END, "1")
+        self.myimage.analysis_range = float(self.analysis_range.get())
+        self.myimage.show_image()
+
     def range_change(self, evemt):
         self.myimage.range_u = int(self.upper_set_entry.get())
         self.myimage.range_l = int(self.lower_set_entry.get())
         self.myimage.show_image()
         self.update_size()
+
+    def update_all_params(self):
+        self.myimage.smooth_val = float(self.smooth_entry.get())
+        self.myimage.median_val = float(self.median_entry.get())
+        self.myimage.analysis_range = float(self.analysis_range.get())
 
     def upper_up(self, evemt):
         val = int(self.upper_set_entry.get()) + 1
@@ -146,17 +155,26 @@ class Events:
         self.range_change(0)
 
     def plane_image(self):
-        self.myimage.plane = self.plane_bool.get()
+        self.myimage.plane_bool = self.plane_bool.get()
         self.myimage.show_image()
 
+    def ave_image(self):
+        self.myimage.ave_bool = self.ave_bool.get()
+        self.myimage.show_image()
+
+
     def auto_detection(self):
-        self.myimage.auto_range = float(self.auto_range.get())
-        self.myimage.auto_thresh = float(self.auto_thresh.get())
-        self.myimage.auto_detection()
+        if self.myimage.open_bool:
+            self.myimage.auto_range = float(self.auto_range.get())
+            self.myimage.auto_thresh = float(self.auto_thresh.get())
+            self.update_all_params()
+            self.myimage.auto_detection()
 
     def original_size_changed(self, event):
         self.myimage.x_size_or = float(self.original_x.get())
         self.myimage.y_size_or = float(self.original_y.get())
+        self.update_size()
+        self.myimage.show_image()
 
     def rec_fol_choice_clicked(self):
         self.rec_fol = False
@@ -171,19 +189,21 @@ class Events:
         self.name_change = True
 
     def record_function(self):
-        self.myimage.prepare_cut_image()
-        self.rec_text()
-        self.rec_image()
+        if self.myimage.open_bool:
+            self.myimage.prepare_cut_image()
+            self.rec_text()
+            self.rec_image()
 
     def record_next_function(self):
-        self.myimage.prepare_cut_image()
-        self.rec_text()
-        self.rec_image()
-        num = self.image_list.images.index(self.choice.get()) + 1
-        if num >= len(self.image_list.images):
-            num = 0
-        self.choice.current(num)
-        self.image_open()
+        if self.myimage.open_bool:
+            self.myimage.prepare_cut_image()
+            self.rec_text()
+            self.rec_image()
+            num = self.image_list.images.index(self.choice.get()) + 1
+            if num >= len(self.image_list.images):
+                num = 0
+            self.choice.current(num)
+            self.image_open()
 
     def run_all_function(self):
         self.auto_bool.set(True)

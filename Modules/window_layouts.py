@@ -35,24 +35,24 @@ class Layouts:
         self.lower_set_entry.grid(row=0, column=4, **self.padWE)
         self.cb_smooth_text.grid(row=1, column=0, **self.padWE)
         self.smooth_entry.grid(row=1, column=1, **self.padWE)
-        self.cb_smooth_unit.grid(row=1, column=2, **self.padWE)
-        self.cb_median_text.grid(row=1, column=3, **self.padWE)
-        self.median_entry.grid(row=1, column=4, **self.padWE)
-        self.cb_median_unit.grid(row=1, column=5, **self.padWE)
+        self.cb_median_text.grid(row=1, column=2, **self.padWE)
+        self.median_entry.grid(row=1, column=3, **self.padWE)
+        self.analysis_range_text.grid(row=2, column=0, **self.padWE)
+        self.analysis_range.grid(row=2, column=1, **self.padWE)
+        self.rescale_text.grid(row=2, column=2, **self.padWE)
+        self.rescale_all.grid(row=2, column=3, **self.padWE)
 
-    def create_layout_rescale(self):
-        self.rescale_text.grid(row=0, column=0, **self.padWE)
-        self.rescale_all.grid(row=0, column=1, **self.padWE)
 
     def create_layout_checks(self):
-        self.plane_check.grid(row=0, column=2, **self.padWE)
+        self.plane_check.grid(row=0, column=0, **self.padWE)
+        self.ave_check.grid(row=0, column=1, **self.padWE)
 
     def create_layout_auto(self):
         self.auto_button.grid(rowspan=3, row=0, column=0, **self.padWE)
         self.auto_range_text.grid(row=0, column=1, **self.padWE)
         self.auto_range.grid(row=0, column=2, **self.padWE)
-        self.auto_thresh_text.grid(row=1, column=1, **self.padWE)
-        self.auto_thresh.grid(row=1, column=2, **self.padWE)
+        self.auto_thresh_text.grid(row=0, column=3, **self.padWE)
+        self.auto_thresh.grid(row=0, column=4, **self.padWE)
         self.auto_check.grid(row=2, column=1, **self.padWE)
 
     def create_layout_size(self):
