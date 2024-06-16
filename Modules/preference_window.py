@@ -17,6 +17,8 @@ class Window(ttk.Frame):
         self.create_frame_auto()
         self.create_frame_record()
         self.create_frame_buttons()
+        self.create_frame_notes()
+        self.create_frame_notes2()
         self.master = master
         master.title("Maxima finder")
 
@@ -53,6 +55,7 @@ class Window(ttk.Frame):
             values=[],
             width=57,
         )
+        self.imtype_choice.bind("<<ComboboxSelected>>", self.type_choice_selected)
         self.imtype_text = ttk.Label(self.frame_image_choice, text="Image type")
         #
         self.button_imopen = tk.Button(
@@ -162,13 +165,13 @@ class Window(ttk.Frame):
         self.frame_process.pack()
 
     def create_widgets_process(self):
-        self.range_text = ttk.Label(self.frame_process, text="Range of image")
+        self.range_text = ttk.Label(self.frame_process, text="Range of image (max: --)")
         self.upper_set_text = ttk.Label(self.frame_process, text="Upper")
         self.lower_set_text = ttk.Label(self.frame_process, text="lower")
         #
         self.upper_set_entry = ttk.Entry(self.frame_process, width=7)
         self.upper_set_entry.bind("<Return>", self.range_change)
-        self.upper_set_entry.insert(tk.END, "256")
+        self.upper_set_entry.insert(tk.END, "100")
         self.upper_set_entry.bind("<Up>", self.upper_up)
         self.upper_set_entry.bind("<Down>", self.upper_down)
 
@@ -356,3 +359,24 @@ class Window(ttk.Frame):
             width=18,
             height=2,
         )
+
+    def create_frame_notes(self):
+        self.frame_notes = ttk.Frame()
+        self.create_widgets_notes()
+        self.create_layout_notes()
+        self.frame_notes.pack()
+
+    def create_widgets_notes(self):
+        self.left_text = ttk.Label(self.frame_notes, text="Left click: Adding a point.")
+        self.right_text = ttk.Label(self.frame_notes, text="Right click: Removing a point.")
+
+    def create_frame_notes2(self):
+        self.frame_notes2 = ttk.Frame()
+        self.create_widgets_notes2()
+        self.create_layout_notes2()
+        self.frame_notes2.pack()
+
+    def create_widgets_notes2(self):
+        self.status_text = ttk.Label(self.frame_notes2, text="Status: None")
+
+

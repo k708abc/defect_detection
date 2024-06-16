@@ -12,6 +12,8 @@ class ImageList:
     dir_name = None
     images = []
     types = []
+    data_type = []
+    default = 4
 
     def formlist(self):
         image_list = [
@@ -19,20 +21,24 @@ class ImageList:
         ]
         self.images = []
         self.types = []
+        self.data_type = []
         for file in image_list:
             data_path = self.dir_name + "\\" + file
             data_type = os.path.splitext(data_path)
             if data_type[1] == ".bmp":
                 self.images.append(file)
                 self.types.append(["bmp"])
+                self.data_type.append("bmp")
             elif data_type[1] == ".txt":
                 check = self.check_text(data_path)
                 if check:
                     self.images.append(file)
                     self.types.append(["txt"])
+                    self.data_type.append("txt")
             elif data_type[1] == ".SM4":
                 self.images.append(file)
                 self.types.append(self.datatypes(data_path))
+                self.data_type.append("SM4")
             else:
                 pass
 
@@ -88,7 +94,9 @@ class MyImage:
     mag = 1
     range_u = 100
     range_l = 0
+    range_max = 100
     points = []
+    effective_points = []
     cut_points = []
     rel_height = []
     auto_range = 2
@@ -126,7 +134,7 @@ class MyImage:
 
     @property
     def defect_number(self):
-        return len(self.points)
+        return len(self.effective_points)
 
     @property
     def density(self):
@@ -147,7 +155,8 @@ class MyImage:
         self.x_size_or = self.params[0]
         self.y_size_or = self.params[1]
         self.y_pix_or, self.x_pix_or = self.image_or.shape[:2]
-        self.range_u = self.y_pix_or
+        self.range_u = self.y_pix_or 
+        self.range_max = self.y_pix_or 
         self.range_l = 0
         self.open_bool = True
         self.image_pl = np.copy(self.image_or)
@@ -278,7 +287,10 @@ class MyImage:
         self.default_contrast()
 
     def smoothing(self):
-        self.image_sm = ndimage.gaussian_filter(self.image_ave, float(self.smooth_val))
+        if self.smooth_val > 1:
+            self.image_sm = ndimage.gaussian_filter(self.image_ave, float(self.smooth_val))
+        else:
+            self.image_sm = np.copy(self.image_ave)
 
     def median(self):
         self.image_med = ndimage.gaussian_filter(self.image_sm, float(self.median_val))
@@ -288,13 +300,19 @@ class MyImage:
         height_y = int(self.y_pix_or * float(self.mag))
         self.image_mod = cv2.resize(self.image_med, (width_x, height_y))
 
-    def draw_point(self):
-        self.image_show = np.copy(self.image_cl)
+    def points_in_range(self):
+        self.effective_points = []
         for point in self.points:
             if point[1] <= self.low_pix and point[1] >= self.up_pix:
-                self.image_show = cv2.circle(
-                    self.image_show, point, self.analysis_range_pix, (0, 0, 255), 1
-                )
+                self.effective_points.append(point)
+
+    def draw_point(self):
+        self.image_show = np.copy(self.image_cl)
+        self.points_in_range()
+        for point in self.effective_points:
+            self.image_show = cv2.circle(
+                self.image_show, point, self.analysis_range_pix, (0, 0, 255), 1
+            )
 
     def add_point(self):
         val = (self.mouse_x, self.mouse_y)
@@ -325,7 +343,6 @@ class MyImage:
             self.mouse_x = x
             self.mouse_y = y
             self.remove_point()
-
         cv2.imshow(self.image_name, self.image_show)
 
     def contrast_adjust(self):
@@ -409,21 +426,22 @@ class MyImage:
             self.image_cl[self.low_pix : height, 0:width] = l_image_show
 
     def prepare_cut_image(self):
-        width = len(self.image_cad[1])
-        image_cl_gray = cv2.cvtColor(self.image_cad, cv2.COLOR_GRAY2BGR)
-        self.cut_image_gray = image_cl_gray[self.up_pix : self.low_pix - 1, 0:width]
-        self.cut_image = self.image_cl[self.up_pix : self.low_pix - 1, 0:width]
+        self.points_in_range()
+        width = len(self.image_mod[1])
+        image_cl_gray = np.copy(self.image_mod)
+        # image_cl_gray = cv2.cvtColor(self.image_cad, cv2.COLOR_GRAY2BGR)
+        self.cut_image_gray = image_cl_gray[self.up_pix : self.low_pix, 0:width]
+        self.cut_image = self.image_cl[self.up_pix : self.low_pix, 0:width]
         self.cut_points = []
-        for point in self.points:
+        for point in self.effective_points:
             x, y = point
             y = y - self.up_pix
             self.cut_points.append((x, y))
         self.cut_image_p = np.copy(self.cut_image)
         for point in self.cut_points:
-            if point[1] <= self.low_pix - self.up_pix and point[1] >= 0:
-                self.cut_image_p = cv2.circle(
-                    self.cut_image_p, point, self.analysis_range_pix, (0, 0, 255), 1
-                )
+            self.cut_image_p = cv2.circle(
+                self.cut_image_p, point, self.analysis_range_pix, (0, 0, 255), 1
+            )
 
     def auto_detection(self):
         height = len(self.image_mod)
@@ -435,9 +453,9 @@ class MyImage:
         for w in x_list:
             for h in y_list:
                 x0 = max(w - self.pix_range, 0)
-                x1 = min(w + self.pix_range, width - 1)
+                x1 = min(w + self.pix_range, width)
                 y0 = max(h - self.pix_range, 0)
-                y1 = min(h + self.pix_range, height - 1)
+                y1 = min(h + self.pix_range, height)
                 vals = self.image_mod[y0:y1, x0:x1]
                 vw = len(vals[1])
                 vh = len(vals)
@@ -472,10 +490,10 @@ class MyImage:
             c_std = np.std(c_vals)
             if point_val < c_ave - c_std * self.auto_thresh:
                 self.points.append((x, y))
-
         self.show_image()
 
     def defect_analysis(self):
+        self.points_in_range()
         height = len(self.image_mod)
         width = len(self.image_mod[1])
         angles = np.linspace(0, 2 * np.pi, 30)
@@ -484,22 +502,27 @@ class MyImage:
             for t in angles
         ]
         self.rel_height = []
-        for point in self.points:
-            x, y = point
-            point_val = self.image_mod[y][x]
-            c_vals = []
-            for c in circle_points:
-                cx = c[1] + x
-                cy = c[0] + y
-                if (cx < 0) or (cx > width - 1) or (cy < 0) or (cy > height - 1):
-                    pass
-                else:
-                    c_vals.append(self.image_mod[cy][cx])
-            c_ave = np.average(c_vals)
-            self.rel_height.append(c_ave - point_val)
-        self.height_ave = np.average(self.rel_height)
-        self.height_std = np.std(self.rel_height)
-        self.norm_std = self.height_std / self.height_ave
+        if len(self.effective_points) >= 2:
+            for point in self.effective_points:
+                x, y = point
+                point_val = self.image_mod[y][x]
+                c_vals = []
+                for c in circle_points:
+                    cx = c[1] + x
+                    cy = c[0] + y
+                    if (cx < 0) or (cx > width - 1) or (cy < 0) or (cy > height - 1):
+                        pass
+                    else:
+                        c_vals.append(self.image_mod[cy][cx])
+                c_ave = np.average(c_vals)
+                self.rel_height.append(c_ave - point_val)
+            self.height_ave = np.average(self.rel_height)
+            self.height_std = np.std(self.rel_height)
+            self.norm_std = self.height_std / self.height_ave
+        else:
+            self.height_ave = None
+            self.height_std = None
+            self.norm_std = None
 
     def set_default(self):
         if self.open_bool:

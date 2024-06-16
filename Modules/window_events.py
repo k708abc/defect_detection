@@ -15,7 +15,10 @@ class Events:
             self.choice.current(0)
             self.button_imopen["state"] = tk.NORMAL
             self.imtype_choice["values"] = self.image_list.types[0]
-            self.imtype_choice.current(0)
+            if self.image_list.data_type[self.choice.current()] == "SM4":
+                self.imtype_choice.current(self.image_list.default)
+            else:
+                self.imtype_choice.current(0)
         else:
             self.button_imopen["state"] = tk.DISABLED
 
@@ -39,11 +42,19 @@ class Events:
     def choice_selected(self, event):
         self.button_imopen["state"] = tk.NORMAL
         self.imtype_choice["values"] = self.image_list.types[self.choice.current()]
-        self.imtype_choice.current(0)
+        if self.image_list.data_type[self.choice.current()] == "SM4":
+            self.imtype_choice.current(self.image_list.default)
+        else:
+            self.imtype_choice.current(0)
         self.master.update()
+
+    def type_choice_selected(self, event):
+        if self.image_list.data_type[self.choice.current()] == "SM4":
+            self.image_list.default = self.imtype_choice.current()
 
     def image_open_clicked(self):
         self.image_open()
+
 
     def image_open(self):
         self.myimage.data_path = self.image_list.dir_name + "\\" + self.choice.get()
@@ -51,11 +62,14 @@ class Events:
         self.myimage.channel_name = self.imtype_choice.get()
         self.myimage.points = []
         self.myimage.read_image()
+        self.update_max()
+        self.status_text["text"] = "Status: Image opened"
         if self.auto_bool.get() is False:
             self.myimage.show_image()
         self.update_after_show()
         if self.auto_bool.get():
             self.auto_detection()
+            self.status_text["text"] = "Status: Image opened with auto detection."
 
     def cb_color_selected(self, event):
         self.myimage.color_num = self.colormap_table.index(self.cb_color.get())
@@ -102,34 +116,47 @@ class Events:
     def range_change(self, evemt):
         self.myimage.range_u = int(self.upper_set_entry.get())
         self.myimage.range_l = int(self.lower_set_entry.get())
-        self.myimage.show_image()
-        self.update_size()
+        if self.myimage.open_bool:
+            self.myimage.show_image()
+            self.update_size()
 
     def update_all_params(self):
         self.myimage.smooth_val = float(self.smooth_entry.get())
         self.myimage.median_val = float(self.median_entry.get())
         self.myimage.analysis_range = float(self.analysis_range.get())
 
+    def update_max(self):
+        self.range_text["text"] = "Range of image (max: " + str(self.myimage.range_max) + ")"
+        self.master.update()
+
     def upper_up(self, evemt):
         val = int(self.upper_set_entry.get()) + 1
+        if val > self.myimage.range_max:
+            val = self.myimage.range_max
         self.upper_set_entry.delete(0, tk.END)
         self.upper_set_entry.insert(tk.END, val)
         self.range_change(0)
 
     def upper_down(self, evemt):
         val = int(self.upper_set_entry.get()) - 1
+        if val < int(self.lower_set_entry.get()):
+            val = int(self.lower_set_entry.get())
         self.upper_set_entry.delete(0, tk.END)
         self.upper_set_entry.insert(tk.END, val)
         self.range_change(0)
 
     def lower_up(self, evemt):
         val = int(self.lower_set_entry.get()) + 1
+        if val > int(self.upper_set_entry.get()):
+            val = int(self.upper_set_entry.get())
         self.lower_set_entry.delete(0, tk.END)
         self.lower_set_entry.insert(tk.END, val)
         self.range_change(0)
 
     def lower_down(self, evemt):
         val = int(self.lower_set_entry.get()) - 1
+        if val < 0:
+            val = 0
         self.lower_set_entry.delete(0, tk.END)
         self.lower_set_entry.insert(tk.END, val)
         self.range_change(0)
@@ -139,6 +166,7 @@ class Events:
         self.myimage.mag = float(self.rescale_all.get())
         up = int(self.upper_set_entry.get()) / prev * float(self.rescale_all.get())
         low = int(self.lower_set_entry.get()) / prev * float(self.rescale_all.get())
+        self.myimage.range_max = int(self.myimage.range_max/ prev * float(self.rescale_all.get()))
         points = []
         for point in self.myimage.points:
             points.append(
@@ -153,6 +181,7 @@ class Events:
         self.lower_set_entry.delete(0, tk.END)
         self.lower_set_entry.insert(tk.END, int(low))
         self.range_change(0)
+        self.update_max()
 
     def plane_image(self):
         self.myimage.plane_bool = self.plane_bool.get()
@@ -169,6 +198,7 @@ class Events:
             self.myimage.auto_thresh = float(self.auto_thresh.get())
             self.update_all_params()
             self.myimage.auto_detection()
+            self.status_text["text"] = "Status: Auto detection done"
 
     def original_size_changed(self, event):
         self.myimage.x_size_or = float(self.original_x.get())
@@ -190,9 +220,12 @@ class Events:
 
     def record_function(self):
         if self.myimage.open_bool:
+            self.status_text["text"] = "Status: Recording..."
             self.myimage.prepare_cut_image()
+            self.myimage.defect_analysis()
             self.rec_text()
             self.rec_image()
+            self.status_text["text"] = "Status: Recorded."
 
     def record_next_function(self):
         if self.myimage.open_bool:
@@ -207,10 +240,13 @@ class Events:
 
     def run_all_function(self):
         self.auto_bool.set(True)
+        self.status_text["text"] = "Status: Run all runnning..."
         for i in range(len(self.image_list.images)):
             self.choice.current(i)
+            self.choice_selected(0)
             self.image_open()
             self.record_function()
+        self.status_text["text"] = "Status: Run all finished"
 
     def delete_function(self):
         self.myimage.points = []
@@ -218,3 +254,4 @@ class Events:
 
     def rec_text(self):
         self.recording_text()
+        self.recording_density()

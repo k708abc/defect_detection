@@ -86,3 +86,10 @@ class Layouts:
         self.record_next_button.grid(row=0, column=1, sticky=tk.N + tk.S)
         self.run_all_button.grid(row=0, column=2, sticky=tk.N + tk.S)
         self.delete_all_button.grid(row=0, column=3, sticky=tk.N + tk.S)
+
+    def create_layout_notes(self):
+        self.left_text.grid(row=0, column=0, **self.padWE)
+        self.right_text.grid(row=0, column=1, **self.padWE)
+
+    def create_layout_notes2(self):
+        self.status_text.grid(row=0, column=0, **self.padWE)

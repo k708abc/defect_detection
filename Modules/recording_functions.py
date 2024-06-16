@@ -1,7 +1,6 @@
 import cv2
 import os
-import matplotlib.pyplot as plt
-
+import csv
 
 class Recording:
     def folder_check(self, folder):
@@ -37,7 +36,7 @@ class Recording:
             f.write("Original_size_X:" + "\t" + str(self.myimage.x_size_or) + "\n")
             f.write("Original_size_Y:" + "\t" + str(self.myimage.y_size_or) + "\n")
             f.write("Current_size_X:" + "\t" + str(self.myimage.x_current) + "\n")
-            f.write("Current_size_Y:" + "\t" + str(self.myimage.y_current) + "\n")
+            f.write("Current_size_Y:" + "\t" + str(round(self.myimage.y_current, 4)) + "\n")
             f.write("Pixcel_X" + "\t" + str(self.myimage.x_current_pix) + "\n")
             f.write("Pixcel_Y" + "\t" + str(self.myimage.y_current_pix) + "\n\n")
             f.write("Smoothing" + "\t" + str(self.myimage.smooth_val) + "\n")
@@ -79,8 +78,37 @@ class Recording:
             f.write("Data:" + "\n")
             for row in self.myimage.cut_image_gray:
                 for values in row:
-                    f.write(str(values[0]) + "\t")
+                    f.write(str(values) + "\t")
                 f.write("\n")
+
+    def recording_density(self):
+        if self.dirdiv_bool.get():
+            fol_add = "defect_density"+  "\\"
+            self.folder_check(self.dir_name_rec + "\\" + fol_add)
+            txt_name = (
+                self.dir_name_rec
+                + "\\"
+                + fol_add
+                + "\\density_summary"
+                + ".csv"
+            )
+        else:
+            txt_name = (
+                self.dir_name_rec
+                + "\\density_summary"
+                + ".csv"
+            )
+        if os.path.isfile(txt_name):
+            pass
+        else:
+            with open(txt_name, "w", newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow(["Data name", "Total area (nm2)", "Defect number", "Density (number/nm2)", "Height average", "Height std", "Normarized std"])
+
+        with open(txt_name, "a", newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow([self.myimage.data_path, self.myimage.total_area, self.myimage.defect_number, self.myimage.density, self.myimage.height_ave, self.myimage.height_std, self.myimage.norm_std])
+
 
     def rec_image(self):
         if self.dirdiv_bool.get():
