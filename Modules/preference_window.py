@@ -1,4 +1,4 @@
-#!python3.11
+#!python3.9
 
 import tkinter as tk
 import tkinter.ttk as ttk
@@ -11,6 +11,7 @@ class Window(ttk.Frame):
         self.create_frame_image_choise()
         self.create_frame_contrast()
         self.create_frame_cb()
+        self.create_frame_range()
         self.create_frame_process()
         self.create_frame_checks()
         self.create_frame_size()
@@ -76,7 +77,7 @@ class Window(ttk.Frame):
         self.upper_val = tk.DoubleVar()
         self.def_max = 255
         self.upper_val.set(self.def_max)
-        self.upper_val.trace("w", self.upper_value_change)
+        self.upper_val.trace_add("write", self.upper_value_change)
         self.scale_upper = ttk.Scale(
             self.frame_contrast,
             variable=self.upper_val,
@@ -89,7 +90,7 @@ class Window(ttk.Frame):
         self.lower_val = tk.DoubleVar()
         self.def_min = 0
         self.lower_val.set(self.def_min)
-        self.lower_val.trace("w", self.lower_value_change)
+        self.lower_val.trace_add("write", self.lower_value_change)
         self.scale_lower = ttk.Scale(
             self.frame_contrast,
             variable=self.lower_val,
@@ -158,6 +159,29 @@ class Window(ttk.Frame):
         self.cb_color.current(2)
         #
 
+    def create_frame_range(self):
+        self.frame_range = ttk.Frame()
+        self.create_widgets_range()
+        self.create_layout_range()
+        self.frame_range.pack()
+
+    def create_widgets_range(self):
+        self.range_text = ttk.Label(self.frame_range, text="Range of image (max: --)")
+        self.upper_set_text = ttk.Label(self.frame_range, text="Upper")
+        self.lower_set_text = ttk.Label(self.frame_range, text="lower")
+        #
+        self.upper_set_entry = ttk.Entry(self.frame_range, width=7)
+        self.upper_set_entry.bind("<Return>", self.range_change)
+        self.upper_set_entry.insert(tk.END, "100")
+        self.upper_set_entry.bind("<Up>", self.upper_up)
+        self.upper_set_entry.bind("<Down>", self.upper_down)
+        #
+        self.lower_set_entry = ttk.Entry(self.frame_range, width=7)
+        self.lower_set_entry.bind("<Return>", self.range_change)
+        self.lower_set_entry.insert(tk.END, "0")
+        self.lower_set_entry.bind("<Up>", self.lower_up)
+        self.lower_set_entry.bind("<Down>", self.lower_down)
+
     def create_frame_process(self):
         self.frame_process = ttk.Frame()
         self.create_widgets_process()
@@ -165,28 +189,12 @@ class Window(ttk.Frame):
         self.frame_process.pack()
 
     def create_widgets_process(self):
-        self.range_text = ttk.Label(self.frame_process, text="Range of image (max: --)")
-        self.upper_set_text = ttk.Label(self.frame_process, text="Upper")
-        self.lower_set_text = ttk.Label(self.frame_process, text="lower")
-        #
-        self.upper_set_entry = ttk.Entry(self.frame_process, width=7)
-        self.upper_set_entry.bind("<Return>", self.range_change)
-        self.upper_set_entry.insert(tk.END, "100")
-        self.upper_set_entry.bind("<Up>", self.upper_up)
-        self.upper_set_entry.bind("<Down>", self.upper_down)
-
-        self.lower_set_entry = ttk.Entry(self.frame_process, width=7)
-        self.lower_set_entry.bind("<Return>", self.range_change)
-        self.lower_set_entry.insert(tk.END, "0")
-        self.lower_set_entry.bind("<Up>", self.lower_up)
-        self.lower_set_entry.bind("<Down>", self.lower_down)
-        #
-        self.smooth_entry = ttk.Entry(self.frame_process, width=4)
+        self.smooth_entry = ttk.Entry(self.frame_process, width=7)
         self.smooth_entry.insert(tk.END, "0")
         self.smooth_entry.bind("<Return>", self.smooth_change)
         self.cb_smooth_text = ttk.Label(self.frame_process, text="Smoothing (pix)")
         #
-        self.median_entry = ttk.Entry(self.frame_process, width=4)
+        self.median_entry = ttk.Entry(self.frame_process, width=7)
         self.median_entry.insert(tk.END, "1")
         self.median_entry.bind("<Return>", self.median_change)
         self.cb_median_text = ttk.Label(self.frame_process, text="Median (pix)")
@@ -194,9 +202,16 @@ class Window(ttk.Frame):
         self.analysis_range_text = ttk.Label(
             self.frame_process, text="Analysis radius (nm)"
         )
-        self.analysis_range = ttk.Entry(self.frame_process, width=4)
+        self.analysis_range = ttk.Entry(self.frame_process, width=7)
         self.analysis_range.bind("<Return>", self.analysis_range_change)
         self.analysis_range.insert(tk.END, "1")
+        #
+        self.analysis_ex_text = ttk.Label(
+            self.frame_process, text="Analysis excluding radius (nm)"
+        )
+        self.analysis_ex = ttk.Entry(self.frame_process, width=7)
+        self.analysis_ex.insert(tk.END, "2")
+
         #
         self.rescale_text = ttk.Label(self.frame_process, text="Rescale")
         self.rescale_all = ttk.Entry(self.frame_process, width=7)
@@ -250,6 +265,11 @@ class Window(ttk.Frame):
         self.auto_thresh = ttk.Entry(self.frame_auto, width=7)
         self.auto_thresh.insert(tk.END, "3")
         #
+        self.auto_dup_text = ttk.Label(
+            self.frame_auto, text="Delete duplicate range (nm)"
+        )
+        self.auto_dup = ttk.Entry(self.frame_auto, width=7)
+        self.auto_dup.insert(tk.END, "0.5")
 
         self.auto_bool = tk.BooleanVar()
         self.auto_bool.set(False)

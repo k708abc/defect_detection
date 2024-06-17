@@ -1,7 +1,9 @@
-#!python3.11
+#!python3.9
 import numpy as np
 import os
-from spym.io import rhksm4
+
+# from spym.io import rhksm4
+import rhksm4
 from PIL import Image
 import cv2
 import glob
@@ -101,9 +103,13 @@ class MyImage:
     rel_height = []
     auto_range = 2
     auto_thresh = 2
+    auto_dup = 0.5
     analysis_range = 1
+    analysis_ex = 2
     #
     rel_height = []
+    abs_height = []
+    analyzed = []
     height_ave = None
     height_std = None
     norm_std = None
@@ -129,6 +135,10 @@ class MyImage:
         return int(self.analysis_range / self.x_current * self.x_current_pix)
 
     @property
+    def analysis_ex_pix(self):
+        return int(self.analysis_ex / self.x_current * self.x_current_pix)
+
+    @property
     def total_area(self):
         return self.x_current * self.y_current
 
@@ -143,6 +153,10 @@ class MyImage:
     @property
     def pix_range(self):
         return int(self.auto_range / self.x_current * self.x_current_pix / 2)
+
+    @property
+    def pix_dup(self):
+        return int(self.auto_dup / self.x_current * self.x_current_pix)
 
     def initialize(self):
         self.upper = 255
@@ -478,7 +492,7 @@ class MyImage:
             for t in angles
         ]
         # self.points = points
-        self.points = []
+        points_cand = []
         for point in points:
             x, y = point
             point_val = self.image_mod[y][x]
@@ -493,7 +507,26 @@ class MyImage:
             c_ave = np.average(c_vals)
             c_std = np.std(c_vals)
             if point_val < c_ave - c_std * self.auto_thresh:
-                self.points.append((x, y))
+                points_cand.append((x, y))
+        #
+        # duplication check
+        self.points = []
+        for p1 in points_cand:
+            x1, y1 = p1
+            val1 = self.image_mod[y1][x1]
+            check = True
+            for p2 in points_cand:
+                x2, y2 = p2
+                if p1 == p2:
+                    pass
+                elif (x1 - x2) ** 2 + (y1 - y2) ** 2 <= self.pix_dup**2:
+                    val2 = self.image_mod[y2][x2]
+                    if val2 < val1:
+                        check = False
+                        break
+            if check:
+                self.points.append((x1, y1))
+
         self.show_image()
 
     def defect_analysis(self):
@@ -508,23 +541,41 @@ class MyImage:
             )
             for t in angles
         ]
+        self.abs_height = []
         self.rel_height = []
-        if len(self.effective_points) >= 2:
-            for point in self.effective_points:
-                x, y = point
-                point_val = self.image_mod[y][x]
-                c_vals = []
-                for c in circle_points:
-                    cx = c[1] + x
-                    cy = c[0] + y
-                    if (cx < 0) or (cx > width - 1) or (cy < 0) or (cy > height - 1):
-                        pass
-                    else:
-                        c_vals.append(self.image_mod[cy][cx])
-                c_ave = np.average(c_vals)
-                self.rel_height.append(c_ave - point_val)
-            self.height_ave = np.average(self.rel_height)
-            self.height_std = np.std(self.rel_height)
+        self.analyzed = []
+        ex_val = self.analysis_ex_pix**2
+        for point in self.effective_points:
+            check = True
+            x, y = point
+            for point2 in self.effective_points:
+                x2, y2 = point2
+                if point == point2:
+                    pass
+                elif (x - x2) ** 2 + (y - y2) ** 2 <= ex_val:
+                    check = False
+                    break
+            point_val = self.image_mod[y][x]
+            c_vals = []
+            for c in circle_points:
+                cx = c[1] + x
+                cy = c[0] + y
+                if (cx < 0) or (cx > width - 1) or (cy < 0) or (cy > height - 1):
+                    pass
+                else:
+                    c_vals.append(self.image_mod[cy][cx])
+            c_ave = np.average(c_vals)
+            self.rel_height.append(c_ave - point_val)
+            self.abs_height.append(point_val)
+            self.analyzed.append(check)
+        ana_vals = []
+        for i in range(len(self.rel_height)):
+            if self.analyzed[i]:
+                ana_vals.append(self.rel_height[i])
+
+        if len(ana_vals) >= 2:
+            self.height_ave = np.average(ana_vals)
+            self.height_std = np.std(ana_vals)
             self.norm_std = self.height_std / self.height_ave
         else:
             self.height_ave = None

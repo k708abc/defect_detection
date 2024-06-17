@@ -1,4 +1,4 @@
-#!python3.11
+#!python3.9
 
 import tkinter as tk
 from Modules.preference_window import Window

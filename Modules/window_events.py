@@ -1,4 +1,4 @@
-#!python3.11
+#!python3.9
 
 import tkinter as tk
 import os
@@ -124,6 +124,7 @@ class Events:
         self.myimage.smooth_val = float(self.smooth_entry.get())
         self.myimage.median_val = float(self.median_entry.get())
         self.myimage.analysis_range = float(self.analysis_range.get())
+        self.myimage.analysis_ex = float(self.analysis_ex.get())
         self.myimage.plane_bool = self.plane_bool.get()
         self.myimage.ave_bool = self.ave_bool.get()
 
@@ -201,6 +202,7 @@ class Events:
         if self.myimage.open_bool:
             self.myimage.auto_range = float(self.auto_range.get())
             self.myimage.auto_thresh = float(self.auto_thresh.get())
+            self.myimage.auto_dup = float(self.auto_dup.get())
             self.update_all_params()
             self.myimage.auto_detection()
             self.status_text["text"] = "Status: Auto detection done"
@@ -225,6 +227,7 @@ class Events:
 
     def record_function(self):
         if self.myimage.open_bool:
+            self.update_all_params()
             self.status_text["text"] = "Status: Recording..."
             self.myimage.prepare_cut_image()
             self.myimage.defect_analysis()
@@ -235,6 +238,7 @@ class Events:
     def record_next_function(self):
         if self.myimage.open_bool:
             self.myimage.prepare_cut_image()
+            self.myimage.defect_analysis()
             self.rec_text()
             self.rec_image()
             num = self.image_list.images.index(self.choice.get()) + 1
