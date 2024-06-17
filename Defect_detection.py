@@ -14,7 +14,7 @@ class App(Window, Layouts, Events, Functions, Recording):
 
 
 if __name__ == "__main__":
-    print("Last update: 15 th June 2024")
+    print("Last update: 17 th June 2024")
     application = tk.Tk()
     app = App(application)
     app.run()

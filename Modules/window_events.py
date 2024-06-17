@@ -55,8 +55,8 @@ class Events:
     def image_open_clicked(self):
         self.image_open()
 
-
     def image_open(self):
+        self.update_all_params()
         self.myimage.data_path = self.image_list.dir_name + "\\" + self.choice.get()
         self.myimage.channel_val = self.imtype_choice.current()
         self.myimage.channel_name = self.imtype_choice.get()
@@ -64,10 +64,11 @@ class Events:
         self.myimage.read_image()
         self.update_max()
         self.status_text["text"] = "Status: Image opened"
-        if self.auto_bool.get() is False:
-            self.myimage.show_image()
+        self.myimage.show_image()
         self.update_after_show()
+        self.update_size()
         if self.auto_bool.get():
+            self.myimage.show_image()
             self.auto_detection()
             self.status_text["text"] = "Status: Image opened with auto detection."
 
@@ -88,7 +89,6 @@ class Events:
         self.lower_val.set(0)
         self.myimage.back_default()
         self.myimage.show_image()
-
 
     def set_default_function(self):
         self.myimage.set_default()
@@ -124,9 +124,13 @@ class Events:
         self.myimage.smooth_val = float(self.smooth_entry.get())
         self.myimage.median_val = float(self.median_entry.get())
         self.myimage.analysis_range = float(self.analysis_range.get())
+        self.myimage.plane_bool = self.plane_bool.get()
+        self.myimage.ave_bool = self.ave_bool.get()
 
     def update_max(self):
-        self.range_text["text"] = "Range of image (max: " + str(self.myimage.range_max) + ")"
+        self.range_text["text"] = (
+            "Range of image (max: " + str(self.myimage.range_max) + ")"
+        )
         self.master.update()
 
     def upper_up(self, evemt):
@@ -166,7 +170,9 @@ class Events:
         self.myimage.mag = float(self.rescale_all.get())
         up = int(self.upper_set_entry.get()) / prev * float(self.rescale_all.get())
         low = int(self.lower_set_entry.get()) / prev * float(self.rescale_all.get())
-        self.myimage.range_max = int(self.myimage.range_max/ prev * float(self.rescale_all.get()))
+        self.myimage.range_max = int(
+            self.myimage.range_max / prev * float(self.rescale_all.get())
+        )
         points = []
         for point in self.myimage.points:
             points.append(
@@ -190,7 +196,6 @@ class Events:
     def ave_image(self):
         self.myimage.ave_bool = self.ave_bool.get()
         self.myimage.show_image()
-
 
     def auto_detection(self):
         if self.myimage.open_bool:

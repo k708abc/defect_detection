@@ -191,7 +191,9 @@ class Window(ttk.Frame):
         self.median_entry.bind("<Return>", self.median_change)
         self.cb_median_text = ttk.Label(self.frame_process, text="Median (pix)")
         #
-        self.analysis_range_text = ttk.Label(self.frame_process, text="Analysis radius (nm)")
+        self.analysis_range_text = ttk.Label(
+            self.frame_process, text="Analysis radius (nm)"
+        )
         self.analysis_range = ttk.Entry(self.frame_process, width=4)
         self.analysis_range.bind("<Return>", self.analysis_range_change)
         self.analysis_range.insert(tk.END, "1")
@@ -201,7 +203,6 @@ class Window(ttk.Frame):
         self.rescale_all.insert(tk.END, "1")
         self.rescale_all.bind("<Return>", self.rescale)
 
-
     def create_frame_checks(self):
         self.frame_check = ttk.Frame()
         self.create_widgets_checks()
@@ -210,7 +211,7 @@ class Window(ttk.Frame):
 
     def create_widgets_checks(self):
         self.plane_bool = tk.BooleanVar()
-        self.plane_bool.set(False)
+        self.plane_bool.set(True)
         self.plane_check = tk.Checkbutton(
             self.frame_check,
             variable=self.plane_bool,
@@ -219,7 +220,7 @@ class Window(ttk.Frame):
         )
 
         self.ave_bool = tk.BooleanVar()
-        self.ave_bool.set(False)
+        self.ave_bool.set(True)
         self.ave_check = tk.Checkbutton(
             self.frame_check,
             variable=self.ave_bool,
@@ -247,9 +248,8 @@ class Window(ttk.Frame):
         #
         self.auto_thresh_text = ttk.Label(self.frame_auto, text="Threshhold (× std)")
         self.auto_thresh = ttk.Entry(self.frame_auto, width=7)
-        self.auto_thresh.insert(tk.END, "2")
+        self.auto_thresh.insert(tk.END, "3")
         #
-
 
         self.auto_bool = tk.BooleanVar()
         self.auto_bool.set(False)
@@ -368,7 +368,9 @@ class Window(ttk.Frame):
 
     def create_widgets_notes(self):
         self.left_text = ttk.Label(self.frame_notes, text="Left click: Adding a point.")
-        self.right_text = ttk.Label(self.frame_notes, text="Right click: Removing a point.")
+        self.right_text = ttk.Label(
+            self.frame_notes, text="Right click: Removing a point."
+        )
 
     def create_frame_notes2(self):
         self.frame_notes2 = ttk.Frame()
@@ -378,5 +380,3 @@ class Window(ttk.Frame):
 
     def create_widgets_notes2(self):
         self.status_text = ttk.Label(self.frame_notes2, text="Status: None")
-
-

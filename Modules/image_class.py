@@ -123,7 +123,7 @@ class MyImage:
     @property
     def y_current_pix(self):
         return abs(self.range_u - self.range_l)
-    
+
     @property
     def analysis_range_pix(self):
         return int(self.analysis_range / self.x_current * self.x_current_pix)
@@ -147,16 +147,14 @@ class MyImage:
     def initialize(self):
         self.upper = 255
         self.lower = 0
-        self.x_mag = 1
-        self.y_mag = 1
 
     def read_image(self):
         self.image_or, self.params = self.get_image_values()
         self.x_size_or = self.params[0]
         self.y_size_or = self.params[1]
         self.y_pix_or, self.x_pix_or = self.image_or.shape[:2]
-        self.range_u = self.y_pix_or 
-        self.range_max = self.y_pix_or 
+        self.range_u = int(self.y_pix_or * self.mag)
+        self.range_max = int(self.y_pix_or * self.mag)
         self.range_l = 0
         self.open_bool = True
         self.image_pl = np.copy(self.image_or)
@@ -266,17 +264,18 @@ class MyImage:
             m2 = self.y_pix_or
             X1, X2 = np.mgrid[:m2, :m1]
             image_sub = np.copy(self.image_or)
-            #Regression
-            X = np.hstack(   ( np.reshape(X1, (m1*m2, 1)) , np.reshape(X2, (m1*m2, 1)) ) )
-            X = np.hstack(   ( np.ones((m1*m2, 1)) , X ))
-            YY = np.reshape(image_sub, (m1*m2, 1))
-            theta = np.dot(np.dot( np.linalg.pinv(np.dot(X.transpose(), X)), X.transpose()), YY)
+            # Regression
+            X = np.hstack((np.reshape(X1, (m1 * m2, 1)), np.reshape(X2, (m1 * m2, 1))))
+            X = np.hstack((np.ones((m1 * m2, 1)), X))
+            YY = np.reshape(image_sub, (m1 * m2, 1))
+            theta = np.dot(
+                np.dot(np.linalg.pinv(np.dot(X.transpose(), X)), X.transpose()), YY
+            )
             plane = np.reshape(np.dot(X, theta), (m2, m1))
-            #Subtraction
+            # Subtraction
             self.image_pl = image_sub - plane
         else:
             self.image_pl = np.copy(self.image_or)
-
 
     def ave_sub(self):
         self.image_ave = np.copy(self.image_pl)
@@ -288,7 +287,9 @@ class MyImage:
 
     def smoothing(self):
         if self.smooth_val > 1:
-            self.image_sm = ndimage.gaussian_filter(self.image_ave, float(self.smooth_val))
+            self.image_sm = ndimage.gaussian_filter(
+                self.image_ave, float(self.smooth_val)
+            )
         else:
             self.image_sm = np.copy(self.image_ave)
 
@@ -470,7 +471,10 @@ class MyImage:
                         points.append((valx + x0, valy + y0))
         angles = np.linspace(0, 2 * np.pi, 30)
         circle_points = [
-            (int(self.analysis_range_pix * np.sin(t)), int(self.analysis_range_pix * np.cos(t)))
+            (
+                int(self.analysis_range_pix * np.sin(t)),
+                int(self.analysis_range_pix * np.cos(t)),
+            )
             for t in angles
         ]
         # self.points = points
@@ -498,7 +502,10 @@ class MyImage:
         width = len(self.image_mod[1])
         angles = np.linspace(0, 2 * np.pi, 30)
         circle_points = [
-            (int(self.analysis_range_pix * np.sin(t)), int(self.analysis_range_pix * np.cos(t)))
+            (
+                int(self.analysis_range_pix * np.sin(t)),
+                int(self.analysis_range_pix * np.cos(t)),
+            )
             for t in angles
         ]
         self.rel_height = []
