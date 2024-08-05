@@ -1,7 +1,9 @@
 #!python3.12
 import numpy as np
 import os
-from spym.io import rhksm4
+
+# from spym.io import rhksm4
+import rhksm4
 from PIL import Image
 import cv2
 import glob
@@ -103,9 +105,13 @@ class MyImage:
     rel_height = []
     auto_range = 2
     auto_thresh = 2
+    auto_dup = 0.5
     analysis_range = 1
+    analysis_ex = 2
     #
     rel_height = []
+    abs_height = []
+    analyzed = []
     height_ave = None
     height_std = None
     norm_std = None
@@ -125,10 +131,14 @@ class MyImage:
     @property
     def y_current_pix(self):
         return abs(self.range_u - self.range_l)
-    
+
     @property
     def analysis_range_pix(self):
         return int(self.analysis_range / self.x_current * self.x_current_pix)
+
+    @property
+    def analysis_ex_pix(self):
+        return int(self.analysis_ex / self.x_current * self.x_current_pix)
 
     @property
     def total_area(self):
@@ -146,19 +156,21 @@ class MyImage:
     def pix_range(self):
         return int(self.auto_range / self.x_current * self.x_current_pix / 2)
 
+    @property
+    def pix_dup(self):
+        return int(self.auto_dup / self.x_current * self.x_current_pix)
+
     def initialize(self):
         self.upper = 255
         self.lower = 0
-        self.x_mag = 1
-        self.y_mag = 1
 
     def read_image(self):
         self.image_or, self.params = self.get_image_values()
         self.x_size_or = self.params[0]
         self.y_size_or = self.params[1]
         self.y_pix_or, self.x_pix_or = self.image_or.shape[:2]
-        self.range_u = self.y_pix_or 
-        self.range_max = self.y_pix_or 
+        self.range_u = int(self.y_pix_or * self.mag)
+        self.range_max = int(self.y_pix_or * self.mag)
         self.range_l = 0
         self.open_bool = True
         self.image_pl = np.copy(self.image_or)
@@ -268,17 +280,18 @@ class MyImage:
             m2 = self.y_pix_or
             X1, X2 = np.mgrid[:m2, :m1]
             image_sub = np.copy(self.image_or)
-            #Regression
-            X = np.hstack(   ( np.reshape(X1, (m1*m2, 1)) , np.reshape(X2, (m1*m2, 1)) ) )
-            X = np.hstack(   ( np.ones((m1*m2, 1)) , X ))
-            YY = np.reshape(image_sub, (m1*m2, 1))
-            theta = np.dot(np.dot( np.linalg.pinv(np.dot(X.transpose(), X)), X.transpose()), YY)
+            # Regression
+            X = np.hstack((np.reshape(X1, (m1 * m2, 1)), np.reshape(X2, (m1 * m2, 1))))
+            X = np.hstack((np.ones((m1 * m2, 1)), X))
+            YY = np.reshape(image_sub, (m1 * m2, 1))
+            theta = np.dot(
+                np.dot(np.linalg.pinv(np.dot(X.transpose(), X)), X.transpose()), YY
+            )
             plane = np.reshape(np.dot(X, theta), (m2, m1))
-            #Subtraction
+            # Subtraction
             self.image_pl = image_sub - plane
         else:
             self.image_pl = np.copy(self.image_or)
-
 
     def ave_sub(self):
         self.image_ave = np.copy(self.image_pl)
@@ -290,7 +303,9 @@ class MyImage:
 
     def smoothing(self):
         if self.smooth_val > 1:
-            self.image_sm = ndimage.gaussian_filter(self.image_ave, float(self.smooth_val))
+            self.image_sm = ndimage.gaussian_filter(
+                self.image_ave, float(self.smooth_val)
+            )
         else:
             self.image_sm = np.copy(self.image_ave)
 
@@ -472,11 +487,14 @@ class MyImage:
                         points.append((valx + x0, valy + y0))
         angles = np.linspace(0, 2 * np.pi, 30)
         circle_points = [
-            (int(self.analysis_range_pix * np.sin(t)), int(self.analysis_range_pix * np.cos(t)))
+            (
+                int(self.analysis_range_pix * np.sin(t)),
+                int(self.analysis_range_pix * np.cos(t)),
+            )
             for t in angles
         ]
         # self.points = points
-        self.points = []
+        points_cand = []
         for point in points:
             x, y = point
             point_val = self.image_mod[y][x]
@@ -491,7 +509,26 @@ class MyImage:
             c_ave = np.average(c_vals)
             c_std = np.std(c_vals)
             if point_val < c_ave - c_std * self.auto_thresh:
-                self.points.append((x, y))
+                points_cand.append((x, y))
+        #
+        # duplication check
+        self.points = []
+        for p1 in points_cand:
+            x1, y1 = p1
+            val1 = self.image_mod[y1][x1]
+            check = True
+            for p2 in points_cand:
+                x2, y2 = p2
+                if p1 == p2:
+                    pass
+                elif (x1 - x2) ** 2 + (y1 - y2) ** 2 <= self.pix_dup**2:
+                    val2 = self.image_mod[y2][x2]
+                    if val2 < val1:
+                        check = False
+                        break
+            if check:
+                self.points.append((x1, y1))
+
         self.show_image()
 
     def defect_analysis(self):
@@ -500,26 +537,47 @@ class MyImage:
         width = len(self.image_mod[1])
         angles = np.linspace(0, 2 * np.pi, 30)
         circle_points = [
-            (int(self.analysis_range_pix * np.sin(t)), int(self.analysis_range_pix * np.cos(t)))
+            (
+                int(self.analysis_range_pix * np.sin(t)),
+                int(self.analysis_range_pix * np.cos(t)),
+            )
             for t in angles
         ]
+        self.abs_height = []
         self.rel_height = []
-        if len(self.effective_points) >= 2:
-            for point in self.effective_points:
-                x, y = point
-                point_val = self.image_mod[y][x]
-                c_vals = []
-                for c in circle_points:
-                    cx = c[1] + x
-                    cy = c[0] + y
-                    if (cx < 0) or (cx > width - 1) or (cy < 0) or (cy > height - 1):
-                        pass
-                    else:
-                        c_vals.append(self.image_mod[cy][cx])
-                c_ave = np.average(c_vals)
-                self.rel_height.append(c_ave - point_val)
-            self.height_ave = np.average(self.rel_height)
-            self.height_std = np.std(self.rel_height)
+        self.analyzed = []
+        ex_val = self.analysis_ex_pix**2
+        for point in self.effective_points:
+            check = True
+            x, y = point
+            for point2 in self.effective_points:
+                x2, y2 = point2
+                if point == point2:
+                    pass
+                elif (x - x2) ** 2 + (y - y2) ** 2 <= ex_val:
+                    check = False
+                    break
+            point_val = self.image_mod[y][x]
+            c_vals = []
+            for c in circle_points:
+                cx = c[1] + x
+                cy = c[0] + y
+                if (cx < 0) or (cx > width - 1) or (cy < 0) or (cy > height - 1):
+                    pass
+                else:
+                    c_vals.append(self.image_mod[cy][cx])
+            c_ave = np.average(c_vals)
+            self.rel_height.append(c_ave - point_val)
+            self.abs_height.append(point_val)
+            self.analyzed.append(check)
+        ana_vals = []
+        for i in range(len(self.rel_height)):
+            if self.analyzed[i]:
+                ana_vals.append(self.rel_height[i])
+
+        if len(ana_vals) >= 2:
+            self.height_ave = np.average(ana_vals)
+            self.height_std = np.std(ana_vals)
             self.norm_std = self.height_std / self.height_ave
         else:
             self.height_ave = None
