@@ -2,8 +2,7 @@
 import numpy as np
 import os
 
-# from spym.io import rhksm4
-import rhksm4
+from spym.io import rhksm4
 from PIL import Image
 import cv2
 import glob
