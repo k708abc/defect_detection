@@ -1,4 +1,4 @@
-#!python3.11
+#!python3.12
 
 import tkinter as tk
 import tkinter.ttk as ttk

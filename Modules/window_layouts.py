@@ -1,3 +1,5 @@
+#!python3.12
+
 from typing import Dict
 import tkinter as tk
 

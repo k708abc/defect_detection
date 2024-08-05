@@ -1,4 +1,4 @@
-#!python3.11
+#!python3.12
 import numpy as np
 import os
 from spym.io import rhksm4
@@ -6,7 +6,9 @@ from PIL import Image
 import cv2
 import glob
 from scipy import ndimage
+import warnings
 
+warnings.simplefilter("ignore", RuntimeWarning)
 
 class ImageList:
     dir_name = None
@@ -17,7 +19,7 @@ class ImageList:
 
     def formlist(self):
         image_list = [
-            os.path.basename(pathname) for pathname in glob.glob(self.dir_name + "\*")
+            os.path.basename(pathname) for pathname in glob.glob(self.dir_name + "\\*")
         ]
         self.images = []
         self.types = []

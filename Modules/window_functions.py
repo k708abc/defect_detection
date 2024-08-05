@@ -1,5 +1,4 @@
-#!python3.11
-
+#!python3.12
 
 import os
 import tkinter as tk

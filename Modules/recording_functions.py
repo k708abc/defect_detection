@@ -1,3 +1,4 @@
+#!python3.12
 import cv2
 import os
 import csv

@@ -1,10 +1,8 @@
-#!python3.11
-
+#!python3.12
 import tkinter as tk
 import os
 from tkinter import filedialog
 import pathlib
-
 
 class Events:
     def images_update(self, dir_name):
