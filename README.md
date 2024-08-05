@@ -1,4 +1,4 @@
-*Defect detection
+# Defect detection
 
 This program is made for detecting defects in scanning probe microscopy images.
 The autodetection method roughly estimates the depressions in the image.
